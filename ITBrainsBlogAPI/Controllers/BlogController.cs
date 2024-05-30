@@ -1,4 +1,5 @@
 ﻿using ITBrainsBlogAPI.Models;
+using ITBrainsBlogAPI.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -41,10 +42,19 @@ namespace ITBrainsBlogAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Blog>> PostBlog(Blog blog)
+        public async Task<ActionResult<Blog>> PostBlog(BlogDTO model)
         {
-            blog.CreatedAt = DateTime.UtcNow;
-            blog.UpdatedAt = DateTime.UtcNow;
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var blog = new Blog
+            {
+                Title = model.Title,
+                Body = model.Body,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
             _context.Blogs.Add(blog);
             await _context.SaveChangesAsync();
 

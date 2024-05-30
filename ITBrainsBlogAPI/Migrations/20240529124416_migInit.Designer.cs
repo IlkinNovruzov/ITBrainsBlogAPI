@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ITBrainsBlogAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240527111150_migInit")]
+    [Migration("20240529124416_migInit")]
     partial class migInit
     {
         /// <inheritdoc />
@@ -152,10 +152,6 @@ namespace ITBrainsBlogAPI.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("LikeCount")
                         .HasColumnType("int");
