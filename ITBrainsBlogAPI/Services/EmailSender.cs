@@ -1,6 +1,6 @@
 ﻿using MailKit.Net.Smtp;
 using MimeKit;
-namespace ITBrainsBlogAPI.Extensions
+namespace ITBrainsBlogAPI.Services
 {
     public interface IEmailService
     {

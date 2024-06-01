@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using ITBrainsBlogAPI.Models;
 using ITBrainsBlogAPI.DTOs;
-using ITBrainsBlogAPI.Extensions;
+using ITBrainsBlogAPI.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace ITBrainsBlogAPI.Controllers
@@ -45,10 +45,10 @@ namespace ITBrainsBlogAPI.Controllers
                 catch (Exception ex)
                 {
                     // Log the exception
-                    return StatusCode(500, "Error sending confirmation email."+ex.Message);
+                    return StatusCode(500, "Error sending confirmation email." + ex.Message);
                 }
                 await _signInManager.SignInAsync(user, isPersistent: false);
-                return Ok();
+                return Ok("Register is successfully");
             }
 
             foreach (var error in result.Errors)
@@ -79,7 +79,7 @@ namespace ITBrainsBlogAPI.Controllers
                 catch (Exception ex)
                 {
                     // Log the exception
-                    return StatusCode(500, "Error sending confirmation email."+ex.Message);
+                    return StatusCode(500, "Error sending confirmation email." + ex.Message);
                 }
 
                 return BadRequest("Email not confirmed. Confirmation email has been sent.");
@@ -88,7 +88,7 @@ namespace ITBrainsBlogAPI.Controllers
 
             if (result.Succeeded)
             {
-                return Ok();
+                return Ok("Successfully");
             }
 
             if (result.IsLockedOut)
@@ -100,14 +100,14 @@ namespace ITBrainsBlogAPI.Controllers
         }
 
         [HttpGet("confirm-email")]
-        public async Task<IActionResult> ConfirmEmail(string userId, string token)
+        public async Task<IActionResult> ConfirmEmail(int userId,string token)
         {
-            if (userId == null || token == null)
+            if (userId == 0 || token == null)
             {
                 return BadRequest("Invalid email confirmation request.");
             }
 
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await _userManager.Users.SingleOrDefaultAsync(u => u.Id == userId);
             if (user == null)
             {
                 return BadRequest("Invalid email confirmation request.");
@@ -125,7 +125,7 @@ namespace ITBrainsBlogAPI.Controllers
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
-            return Ok();
+            return Ok("Logout");
         }
 
         [HttpGet("me")]
@@ -146,8 +146,26 @@ namespace ITBrainsBlogAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<List<IdentityUser>>> GetUsers()
         {
-            var users = _userManager.Users;
+            var users =await _userManager.Users.ToListAsync();
             return Ok(users);
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser([FromRoute] int id)
+        {
+            var user = await _userManager.Users.SingleOrDefaultAsync(u => u.Id == id);
+            if (user == null)
+            {
+                return NotFound(new { Message = "User Not Found" });
+            }
+
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
+
+            return Ok(new { Message = "User deleted successfully" });
+        }
+
     }
 }

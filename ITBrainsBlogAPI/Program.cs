@@ -1,4 +1,5 @@
 using ITBrainsBlogAPI.Models;
+using ITBrainsBlogAPI.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,7 +33,8 @@ namespace ITBrainsBlogAPI
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddScoped<Extensions.IEmailService, Extensions.EmailSender>();
+            builder.Services.AddScoped<Services.IEmailService, Services.EmailSender>();
+            builder.Services.AddScoped<AzureBlobService>();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

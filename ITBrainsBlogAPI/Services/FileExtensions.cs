@@ -1,4 +1,4 @@
-﻿namespace ITBrainsBlogAPI.Extensions
+﻿namespace ITBrainsBlogAPI.Services
 {
     public static class FileExtensions
     {
