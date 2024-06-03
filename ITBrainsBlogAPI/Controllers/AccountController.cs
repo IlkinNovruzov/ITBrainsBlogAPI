@@ -5,6 +5,8 @@ using ITBrainsBlogAPI.Models;
 using ITBrainsBlogAPI.DTOs;
 using ITBrainsBlogAPI.Services;
 using Microsoft.EntityFrameworkCore;
+using Azure.Storage.Blobs.Models;
+using System.Net.Mail;
 
 namespace ITBrainsBlogAPI.Controllers
 {
@@ -15,12 +17,14 @@ namespace ITBrainsBlogAPI.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly IEmailService _emailService;
+        public AzureBlobService _service;
 
-        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, IEmailService emailService)
+        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, IEmailService emailService, AzureBlobService service)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailService = emailService;
+            _service = service;
         }
 
         [HttpPost("register")]
@@ -31,21 +35,23 @@ namespace ITBrainsBlogAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var user = new AppUser { UserName = model.Email, Email = model.Email, Name = model.Name, Surname = model.Surname, ImageUrl = "default" };
+            var user = new AppUser { UserName = model.Email, Email = model.Email, Name = model.Name, Surname = model.Surname, ImageUrl = "https://itbblogstorage.blob.core.windows.net/itbcontainer/0e39b3d3-971a-43c4-bf37-5f517b6bd0c8_defaultimage.png" };
             var result = await _userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 var confirmationLink = $"http://localhost:5173/confirm-email?userId={user.Id}&token={Uri.EscapeDataString(token)}";
-                //var confirmationLink = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, token = token }, Request.Scheme);
                 try
                 {
                     await _emailService.SendEmailAsync(model.Email, "Confirm your email", $"Please confirm your account by <a href='{confirmationLink}'>clicking here</a>.");
                 }
+                catch (SmtpException ex)
+                {
+                    return StatusCode(500, $"Error sending confirmation email: {ex.Message}");
+                }
                 catch (Exception ex)
                 {
-                    // Log the exception
-                    return StatusCode(500, "Error sending confirmation email." + ex.Message);
+                    return StatusCode(500, $"Error sending confirmation email: {ex.Message}");
                 }
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 return Ok("Register is successfully");
@@ -100,7 +106,7 @@ namespace ITBrainsBlogAPI.Controllers
         }
 
         [HttpGet("confirm-email")]
-        public async Task<IActionResult> ConfirmEmail(int userId,string token)
+        public async Task<IActionResult> ConfirmEmail(int userId, string token)
         {
             if (userId == 0 || token == null)
             {
@@ -121,6 +127,7 @@ namespace ITBrainsBlogAPI.Controllers
 
             return BadRequest("Error confirming your email.");
         }
+
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
@@ -143,12 +150,14 @@ namespace ITBrainsBlogAPI.Controllers
                 user.Email
             });
         }
+
         [HttpGet]
         public async Task<ActionResult<List<IdentityUser>>> GetUsers()
         {
-            var users =await _userManager.Users.ToListAsync();
+            var users = await _userManager.Users.ToListAsync();
             return Ok(users);
         }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser([FromRoute] int id)
         {
@@ -165,6 +174,37 @@ namespace ITBrainsBlogAPI.Controllers
             }
 
             return Ok(new { Message = "User deleted successfully" });
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetUser([FromRoute] int id)
+        {
+            var user = await _userManager.Users.SingleOrDefaultAsync(u => u.Id == id);
+            if (user == null)
+            {
+                return NotFound(new { Message = "User Not Found" });
+            }
+            return Ok(user);
+        }
+
+        [HttpPost("{id}/upload-profile-image")]
+        public async Task<IActionResult> UploadProfileImage([FromRoute] int id,IFormFile file)
+        {
+            var user = await _userManager.Users.SingleOrDefaultAsync(u => u.Id == id);
+            if (user == null)
+            {
+                return NotFound(new { Message = "User not found" });
+            }
+            if (!FileExtensions.IsImage(file))
+            {
+                return BadRequest("This file type is not accepted.");
+            }
+
+            var fileName = await _service.UploadFile(file);
+            var profileImageUrl = $"https://itbblogstorage.blob.core.windows.net/itbcontainer/{fileName}";
+            user.ImageUrl = profileImageUrl;
+            await _userManager.UpdateAsync(user);
+            return Ok(new { Message = "Profile image uploaded successfully", ImageUrl = user.ImageUrl });
         }
 
     }

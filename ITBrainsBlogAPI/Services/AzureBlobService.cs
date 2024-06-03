@@ -20,7 +20,7 @@ namespace ITBrainsBlogAPI.Services
             var azureResponse = new List<BlobContentInfo>();
             foreach (var file in files)
             {
-                string fileName = file.FileName;
+                string fileName = $"{Guid.NewGuid()}_{file.FileName}";
                 using (var memoryStream = new MemoryStream())
                 {
                     file.CopyTo(memoryStream);
@@ -31,6 +31,18 @@ namespace ITBrainsBlogAPI.Services
                 }
             }
             return azureResponse;
+        }
+        public async Task<string> UploadFile(IFormFile file)
+        {
+            string fileName = $"{Guid.NewGuid()}_{file.FileName}";
+            using (var memoryStream = new MemoryStream())
+            {
+                await file.CopyToAsync(memoryStream);
+                memoryStream.Position = 0;
+
+                var client = await _blobContainerClient.UploadBlobAsync(fileName, memoryStream, default);
+                return fileName;
+            }
         }
         public async Task<List<BlobItem>> GetUploadedBlob()
         {
