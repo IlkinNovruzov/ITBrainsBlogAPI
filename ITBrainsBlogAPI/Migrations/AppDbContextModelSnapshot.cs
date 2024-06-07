@@ -140,7 +140,7 @@ namespace ITBrainsBlogAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("AppUserId")
+                    b.Property<int>("AppUserId")
                         .HasColumnType("int");
 
                     b.Property<string>("Body")
@@ -206,6 +206,9 @@ namespace ITBrainsBlogAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AppUserId")
+                        .HasColumnType("int");
+
                     b.Property<int>("BlogId")
                         .HasColumnType("int");
 
@@ -220,16 +223,13 @@ namespace ITBrainsBlogAPI.Migrations
                         .IsRequired()
                         .HasColumnType("int");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("AppUserId");
 
                     b.HasIndex("BlogId");
 
                     b.HasIndex("ParentReviewId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Reviews");
                 });
@@ -339,9 +339,13 @@ namespace ITBrainsBlogAPI.Migrations
 
             modelBuilder.Entity("ITBrainsBlogAPI.Models.Blog", b =>
                 {
-                    b.HasOne("ITBrainsBlogAPI.Models.AppUser", null)
+                    b.HasOne("ITBrainsBlogAPI.Models.AppUser", "AppUser")
                         .WithMany("Blogs")
-                        .HasForeignKey("AppUserId");
+                        .HasForeignKey("AppUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AppUser");
                 });
 
             modelBuilder.Entity("ITBrainsBlogAPI.Models.Image", b =>
@@ -357,29 +361,29 @@ namespace ITBrainsBlogAPI.Migrations
 
             modelBuilder.Entity("ITBrainsBlogAPI.Models.Review", b =>
                 {
-                    b.HasOne("ITBrainsBlogAPI.Models.Blog", "Blog")
+                    b.HasOne("ITBrainsBlogAPI.Models.AppUser", "AppUser")
                         .WithMany("Reviews")
-                        .HasForeignKey("BlogId")
+                        .HasForeignKey("AppUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("ITBrainsBlogAPI.Models.Blog", "Blog")
+                        .WithMany("Reviews")
+                        .HasForeignKey("BlogId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("ITBrainsBlogAPI.Models.Review", "ParentReview")
-                        .WithMany("Replies")
+                        .WithMany("Reviews")
                         .HasForeignKey("ParentReviewId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ITBrainsBlogAPI.Models.AppUser", "User")
-                        .WithMany("Reviews")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("AppUser");
 
                     b.Navigation("Blog");
 
                     b.Navigation("ParentReview");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -449,7 +453,7 @@ namespace ITBrainsBlogAPI.Migrations
 
             modelBuilder.Entity("ITBrainsBlogAPI.Models.Review", b =>
                 {
-                    b.Navigation("Replies");
+                    b.Navigation("Reviews");
                 });
 #pragma warning restore 612, 618
         }

@@ -4,10 +4,8 @@ namespace ITBrainsBlogAPI.DTOs
 {
     public class BlogDTO
     {
-        [Required]
         public string Title { get; set; }
-        [Required]
         public string Body { get; set; }
-        public IFormFile ImgFile { get; set; }
+        public List<IFormFile>? ImgFiles { get; set; }
     }
 }

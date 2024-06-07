@@ -25,7 +25,7 @@ namespace ITBrainsBlogAPI.Services
 
             using var client = new SmtpClient();
             await client.ConnectAsync("smtp.gmail.com", 465, true);
-            await client.AuthenticateAsync("uomostore004@gmail.com", "vzza dzjt aaas okbo");
+            await client.AuthenticateAsync("uomostore004@gmail.com", "huid stib ohfd ypxi");
             await client.SendAsync(mimeMessage);
             await client.DisconnectAsync(true);
             var msg = new MimeMessage();

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace ITBrainsBlogAPI.Models
 {
@@ -11,8 +12,9 @@ namespace ITBrainsBlogAPI.Models
         [Required]
         public string ImageUrl { get; set; }
 
-        [Required]
+        
         public int BlogId { get; set; }
+        [JsonIgnore]
         public Blog Blog { get; set; }
 
         public bool IsActive { get; set; }
